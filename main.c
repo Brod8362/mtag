@@ -13,5 +13,6 @@ int main() {
         return 1;
     }
     create_tables(db);
+    prepare_statements(db);
     sqlite3_close(db);
 }
