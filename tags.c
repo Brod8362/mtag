@@ -18,6 +18,47 @@ sqlite3_stmt* rename_category_stmt;
 sqlite3_stmt* add_tag_file_stmt;
 sqlite3_stmt* remove_tag_file_stmt;
 
+void create_category(sqlite3* db, const char* name) {
+    sqlite3_bind_text(create_category_stmt, 0, name, -1, 0);
+    int res = sqlite3_step(create_category_stmt);
+    if (res != SQLITE_OK) {
+        fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+    }
+    sqlite3_reset(create_category_stmt);
+}
+
+int retrieve_category_count(sqlite3* db) {
+    sqlite3_step(fetch_category_count);
+    int r = sqlite3_column_int(fetch_category_count, 0);
+    sqlite3_reset(fetch_category_count);
+    return r;
+}
+
+void retrieve_categories(sqlite3* db, TagCategory* categories[], int size) {
+        int i = 0;
+    int step;
+    do {
+        if (i >= size) break;
+        step = sqlite3_step(fetch_categories);
+        TagCategory category = {
+            .id = sqlite3_column_int(fetch_categories, 0),
+            .name = sqlite3_column_text(fetch_categories, 1)
+        };
+        categories[i++] = &category;
+    } while (step == SQLITE_ROW);
+    sqlite3_reset(fetch_categories);
+}
+
+void create_tag(sqlite3* db, const char* name, TagCategory* category) {
+    sqlite3_bind_int(create_tag_stmt, 0, category->id);
+    sqlite3_bind_text(create_tag_stmt, 1, name, -1, 0);
+    int res = sqlite3_step(create_tag_stmt);
+    if (res != SQLITE_OK) {
+        fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+    }
+    sqlite3_reset(create_tag_stmt);
+}
+
 int retrieve_tag_count(sqlite3* db) {
     sqlite3_step(fetch_tag_count);
     int r = sqlite3_column_int(fetch_tag_count, 0);
