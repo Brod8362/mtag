@@ -31,21 +31,17 @@ void rename_category(sqlite3* db, TagCategory* category, const char* new_name);
 
 void create_category(sqlite3* db, const char* name);
 
-int retrieve_category_count(sqlite3* db);
-
-void retrieve_categories(sqlite3* db, TagCategory* categories[], int size);
-
-void create_tag(sqlite3* db, const char* name, TagCategory* category);
+int retrieve_categories(sqlite3* db, TagCategory** out);
 
 //Tag related
+
+void create_tag(sqlite3* db, const char* name, TagCategory* category);
 
 void rename_tag(sqlite3* db, Tag* tag, const char* new_name);
 
 void change_tag_category(sqlite3* db, Tag* tag, TagCategory* category);
 
-int retrieve_tag_count(sqlite3* db);
-
-void retrieve_tags(sqlite3* db, Tag* tags[], int size);
+int retrieve_tags(sqlite3* db, Tag** out);
 
 //Misc
 

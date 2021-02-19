@@ -15,7 +15,6 @@ sqlite3_stmt* reassign_tag_category_stmt;
 sqlite3_stmt* create_category_stmt;
 sqlite3_stmt* rename_category_stmt;
 sqlite3_stmt* get_file_tags_stmt;
-sqlite3_stmt* get_file_tags_count_stmt;
 sqlite3_stmt* add_tag_file_stmt;
 sqlite3_stmt* remove_tag_file_stmt;
 
@@ -85,26 +84,24 @@ void create_category(sqlite3* db, const char* name) {
     sqlite3_reset(create_category_stmt);
 }
 
-int retrieve_category_count(sqlite3* db) {
-    sqlite3_step(fetch_category_count_stmt);
-    int r = sqlite3_column_int(fetch_category_count_stmt, 0);
-    sqlite3_reset(fetch_category_count_stmt);
-    return r;
-}
-
-void retrieve_categories(sqlite3* db, TagCategory* categories[], int size) {
-    int i = 0;
-    int step;
-    do {
-        if (i >= size) break;
-        step = sqlite3_step(fetch_categories_stmt);
-        TagCategory category = {
-            .id = sqlite3_column_int(fetch_categories_stmt, 0),
-            .name = sqlite3_column_text(fetch_categories_stmt, 1) //todo this is not working currently
-        };
-        categories[i++] = &category;
-    } while (step == SQLITE_ROW);
+int retrieve_categories(sqlite3* db, TagCategory** out) {
+    size_t i = 0;
+    size_t size = 16;
+    TagCategory* cats = malloc(sizeof(cats[0])*size);
+    while (sqlite3_step(fetch_categories_stmt) == SQLITE_ROW) {
+        if (i == size) {
+            size*=2;
+            cats = realloc(cats, sizeof(cats[0])*size);
+        }
+        cats[i].id = sqlite3_column_int(fetch_categories_stmt, 0);
+        cats[i].name = strdup(sqlite3_column_text(fetch_categories_stmt, 1));
+        i++;
+    };
+    cats = realloc(cats, sizeof(cats[0])*i);
     sqlite3_reset(fetch_categories_stmt);
+
+    *out = cats;
+    return i;
 }
 
 // ###### TAG FUNCTIONS ######
@@ -144,36 +141,34 @@ void change_tag_category(sqlite3* db, Tag* tag, TagCategory* category) {
     sqlite3_reset(reassign_tag_category_stmt);
 }
 
-int retrieve_tag_count(sqlite3* db) {
-    sqlite3_step(fetch_tag_count_stmt);
-    int r = sqlite3_column_int(fetch_tag_count_stmt, 0);
-    sqlite3_reset(fetch_tag_count_stmt);
-    return r;
-}
-
-void retrieve_tags(sqlite3* db, Tag* tags[], int size) {
-    int i = 0;
-    int step;
-    do {
-        if (i >= size) break;
-        step = sqlite3_step(fetch_tags_stmt);
-        Tag tag = {
-            .id = sqlite3_column_int(fetch_tags_stmt, 0),
-            .category = sqlite3_column_int(fetch_tags_stmt, 1),
-            .name = sqlite3_column_text(fetch_tags_stmt, 2)
-        };
-        tags[i++] = &tag;
-    } while (step == SQLITE_ROW);
+int retrieve_tags(sqlite3* db, Tag** out) {
+    size_t i = 0;
+    size_t size = 16;
+    Tag* tags = malloc(sizeof(tags[0])*size);
+    while (sqlite3_step(fetch_tags_stmt) == SQLITE_ROW) {
+        if (i == size) {
+            size*=2;
+            tags = realloc(tags, sizeof(tags[0])*size);
+        }
+        tags[i].id = sqlite3_column_int(fetch_tags_stmt, 0);
+        tags[i].category = sqlite3_column_int(fetch_tags_stmt, 1);
+        tags[i].name = strdup(sqlite3_column_text(fetch_tags_stmt, 2));
+        i++;
+    };
+    tags = realloc(tags, sizeof(tags[0])*i);
     sqlite3_reset(fetch_tags_stmt);
+
+    *out = tags;
+    return i;
 }
 
 // ###### MISC FUNCTIONS ######
 
 void create_tables(sqlite3* db) {
     const char* tables[] = {
-        "CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, category INTEGER, name STRING NOT NULL)",
-        "CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name STRING NOT NULL)",
-        "CREATE TABLE files (id INTEGER PRIMARY KEY AUTOINCREMENT, name STRING NOT NULL, tag INTEGER NOT NULL)"
+        "CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, category INTEGER, name TEXT NOT NULL)",
+        "CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)",
+        "CREATE TABLE files (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, tag INTEGER NOT NULL)"
     };
     char* errmsg;
     for (int i = 0; i < 3; i++) {
