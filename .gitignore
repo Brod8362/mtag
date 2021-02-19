@@ -1,3 +1,4 @@
 *.db
 *.o
 mtag
+glade/mtag.glade~

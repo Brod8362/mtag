@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=$(shell pkg-config --cflags gtk+-3.0) -g3
-LIBS=-lsqlite3
+CFLAGS=$(shell pkg-config --cflags gtk+-3.0) -g3 -Wall
+LIBS=$(shell pkg-config --libs gtk+-3.0) -lsqlite3
 
 mtag: main.o tags.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
