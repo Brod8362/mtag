@@ -4,42 +4,46 @@
 #include <stdio.h>
 #include "tags.h"
 
-sqlite3_stmt* fetch_tag_count_stmt;
-sqlite3_stmt* fetch_tags_stmt;
-sqlite3_stmt* fetch_category_count_stmt;
-sqlite3_stmt* fetch_categories_stmt;
+sqlite3_stmt* fetch_tags_stmt; //Get all tags
+sqlite3_stmt* create_tag_stmt; //Create a new tag
+sqlite3_stmt* rename_tag_stmt; //Rename a tag
+sqlite3_stmt* reassign_tag_category_stmt; //Change a tag's category
+sqlite3_stmt* delete_tag_stmt; //Delete a tag
+sqlite3_stmt* reassign_null_tag_stmt; //Remove all instances of a tag from files
 
-sqlite3_stmt* create_tag_stmt;
-sqlite3_stmt* rename_tag_stmt;
-sqlite3_stmt* reassign_tag_category_stmt;
-sqlite3_stmt* create_category_stmt;
-sqlite3_stmt* rename_category_stmt;
-sqlite3_stmt* get_file_tags_stmt;
-sqlite3_stmt* add_tag_file_stmt;
-sqlite3_stmt* remove_tag_file_stmt;
+sqlite3_stmt* fetch_categories_stmt; //Get all categories
+sqlite3_stmt* create_category_stmt; //Create a new category
+sqlite3_stmt* rename_category_stmt; //Rename a category
+sqlite3_stmt* delete_category_stmt; //Delete a category
+sqlite3_stmt* reassign_null_category_stmt; //Reassign all instances of a category with -1
+
+sqlite3_stmt* get_file_tags_stmt; //Get a file's tags
+sqlite3_stmt* add_file_tag_stmt; //Add a new tag to a file
+sqlite3_stmt* remove_file_tag_stmt; //Remove a tag from a file
 
 // ###### FILE FUNCTIONS ######
 
 void remove_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
     //name comes 2nd
-    sqlite3_bind_int(remove_tag_file_stmt, 1, tag->id);
-    sqlite3_bind_text(remove_tag_file_stmt, 2, file->filename, -1, 0);
-    int res = sqlite3_step(remove_tag_file_stmt);
+    sqlite3_bind_int(remove_file_tag_stmt, 1, tag->id);
+    sqlite3_bind_text(remove_file_tag_stmt, 2, file->filename, -1, 0);
+    int res = sqlite3_step(remove_file_tag_stmt);
     if (res != SQLITE_DONE) {
         fprintf(stderr, "failed removing file tag:%s\n", sqlite3_errmsg(db));
     }
-    sqlite3_reset(remove_tag_file_stmt);
+    sqlite3_reset(remove_file_tag_stmt);
+    get_file_tags(db, file->filename, file);
 }
 
 void add_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
     //this function will reassign the file pointer to include the new tag added
-    sqlite3_bind_text(add_tag_file_stmt, 1, file->filename, -1, 0);
-    sqlite3_bind_int(add_tag_file_stmt, 2, tag->id);
-    int res = sqlite3_step(add_tag_file_stmt);
+    sqlite3_bind_text(add_file_tag_stmt, 1, file->filename, -1, 0);
+    sqlite3_bind_int(add_file_tag_stmt, 2, tag->id);
+    int res = sqlite3_step(add_file_tag_stmt);
     if (res != SQLITE_DONE) {
         fprintf(stderr, "failed to add tag to file:%s\n", sqlite3_errmsg(db));
     }
-    sqlite3_reset(add_tag_file_stmt);
+    sqlite3_reset(add_file_tag_stmt);
     //if there's segfaults or memory leaks, look here, this is probably a bad idea
     //HEY SCORE IF YOU WANT TO BUG ME ABOUT SOMETHING, START HERE!
     get_file_tags(db, file->filename, file);
@@ -64,6 +68,23 @@ void get_file_tags(sqlite3* db, const char* filename, TaggedFile* tf) {
 }
 
 // ###### CATEGORY FUNCTIONS ######
+
+void delete_category(sqlite3* db, TagCategory* category) {
+    sqlite3_bind_int(delete_category_stmt, 1, category->id);
+    int res = sqlite3_step(delete_category_stmt);
+    if (res != SQLITE_DONE) {
+        fprintf(stderr, "failed to delete category:%s\n", sqlite3_errmsg(db));
+    } else {
+        //when successfully deleted, need to reassign the now irrelevant tag categories
+        sqlite3_bind_int(reassign_null_category_stmt, 1, category->id);
+        res = sqlite3_step(reassign_null_category_stmt);
+        if (res != SQLITE_DONE) {
+            fprintf(stderr, "failed to reassign null categories:%s\n", sqlite3_errmsg(db));
+        }
+    }
+    sqlite3_reset(delete_category_stmt);
+    sqlite3_reset(reassign_null_category_stmt);
+}
 
 void rename_category(sqlite3* db, TagCategory* category, const char* new_name) {
     sqlite3_bind_text(rename_category_stmt, 1, new_name, -1, 0);
@@ -106,6 +127,22 @@ int retrieve_categories(sqlite3* db, TagCategory** out) {
 
 // ###### TAG FUNCTIONS ######
 
+void delete_tag(sqlite3* db, Tag* tag) {
+    sqlite3_bind_int(delete_tag_stmt, 1, tag->id);
+    int res = sqlite3_step(delete_tag_stmt);
+    if (res != SQLITE_DONE) {
+        fprintf(stderr, "failed to delete tag:%s\n", sqlite3_errmsg(db));
+    } else {
+        sqlite3_bind_int(reassign_null_tag_stmt, 1, tag->id);
+        res = sqlite3_step(reassign_null_tag_stmt);
+        if (res != SQLITE_DONE) {
+            fprintf(stderr, "failed to reassign null tag:%s\n", sqlite3_errmsg(db));
+        }
+    }
+    sqlite3_reset(delete_tag_stmt);
+    sqlite3_reset(reassign_null_tag_stmt);
+}
+
 void rename_tag(sqlite3* db, Tag* tag, const char* new_name) {
     sqlite3_bind_text(rename_tag_stmt, 1, new_name, -1, 0);
     sqlite3_bind_int(rename_tag_stmt, 2, tag->id);
@@ -117,7 +154,12 @@ void rename_tag(sqlite3* db, Tag* tag, const char* new_name) {
 }
 
 void create_tag(sqlite3* db, const char* name, TagCategory* category) {
-    sqlite3_bind_int(create_tag_stmt, 1, category->id);
+    //BUG: it wont assign anything other than -1 for category
+    int catid = -1;
+    if (category != NULL) {
+        catid = category->id;
+    }
+    sqlite3_bind_int(create_tag_stmt, 1, catid);
     sqlite3_bind_text(create_tag_stmt, 2, name, -1, 0);
     int res = sqlite3_step(create_tag_stmt);
     if (res != SQLITE_DONE) {
@@ -180,17 +222,20 @@ void create_tables(sqlite3* db) {
 }
 
 void prepare_statements(sqlite3* db) {
-    sqlite3_prepare_v2(db, "SELECT tag FROM files WHERE name=?", -1, &get_file_tags_stmt, 0);
-    sqlite3_prepare_v2(db, "SELECT COUNT(id) FROM tags", -1, &fetch_tag_count_stmt, 0);
     sqlite3_prepare_v2(db, "SELECT * from tags", -1, &fetch_tags_stmt, 0);
-    sqlite3_prepare_v2(db, "SELECT COUNT(id) FROM categories", -1, &fetch_category_count_stmt, 0);
-    sqlite3_prepare_v2(db, "SELECT * FROM categories", -1, &fetch_categories_stmt, 0);
-
     sqlite3_prepare_v2(db, "INSERT INTO tags (category, name) VALUES (?, ?)", -1, &create_tag_stmt, 0);
     sqlite3_prepare_v2(db, "UPDATE tags SET name=? WHERE id=?", -1, &rename_tag_stmt, 0);
     sqlite3_prepare_v2(db, "UPDATE tags SET category=? WHERE id=?", -1, &reassign_tag_category_stmt, 0);
+    sqlite3_prepare_v2(db, "DELETE FROM tags WHERE id=?", -1, &delete_tag_stmt, 0);
+    sqlite3_prepare_v2(db, "DELETE FROM files WHERE tag=?", -1, &reassign_null_tag_stmt, 0);
+
+    sqlite3_prepare_v2(db, "SELECT * FROM categories", -1, &fetch_categories_stmt, 0);
     sqlite3_prepare_v2(db, "INSERT INTO categories (name) VALUES (?)", -1, &create_category_stmt, 0);
     sqlite3_prepare_v2(db, "UPDATE categories SET name=? WHERE id=?", -1, &rename_category_stmt, 0);
-    sqlite3_prepare_v2(db, "DELETE FROM files WHERE id=? AND name=?", -1, &remove_tag_file_stmt, 0);
-    sqlite3_prepare_v2(db, "INSERT INTO files (name, tag) VALUES (?, ?)", -1, &add_tag_file_stmt, 0);
+    sqlite3_prepare_v2(db, "DELETE FROM categories WHERE id=?", -1, &delete_category_stmt, 0);
+    sqlite3_prepare_v2(db, "UPDATE tags SET category=-1 WHERE category=?", -1, &reassign_null_category_stmt, 0);
+
+    sqlite3_prepare_v2(db, "SELECT tag FROM files WHERE name=?", -1, &get_file_tags_stmt, 0);
+    sqlite3_prepare_v2(db, "INSERT INTO files (name, tag) VALUES (?, ?)", -1, &add_file_tag_stmt, 0);
+    sqlite3_prepare_v2(db, "DELETE FROM files WHERE tag=? AND name=?", -1, &remove_file_tag_stmt, 0);
 }

@@ -27,6 +27,8 @@ void get_file_tags(sqlite3* db, const char* filename, TaggedFile* output);
 
 //Category related
 
+void delete_category(sqlite3* db, TagCategory* category);
+
 void rename_category(sqlite3* db, TagCategory* category, const char* new_name);
 
 void create_category(sqlite3* db, const char* name);
@@ -34,6 +36,8 @@ void create_category(sqlite3* db, const char* name);
 int retrieve_categories(sqlite3* db, TagCategory** out);
 
 //Tag related
+
+void delete_tag(sqlite3* db, Tag* tag);
 
 void create_tag(sqlite3* db, const char* name, TagCategory* category);
 
