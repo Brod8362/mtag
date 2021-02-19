@@ -22,8 +22,8 @@ sqlite3_stmt* remove_tag_file_stmt;
 
 void remove_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
     //name comes 2nd
-    sqlite3_bind_int(remove_tag_file_stmt, 0, tag->id);
-    sqlite3_bind_text(remove_tag_file_stmt, 1, file->filename, -1, 0);
+    sqlite3_bind_int(remove_tag_file_stmt, 1, tag->id);
+    sqlite3_bind_text(remove_tag_file_stmt, 2, file->filename, -1, 0);
     int res = sqlite3_step(remove_tag_file_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed removing file tag:%s\n", sqlite3_errmsg(db));
@@ -33,20 +33,20 @@ void remove_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
 
 void add_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
     //this function will reassign the file pointer to include the new tag added
-    sqlite3_bind_text(add_tag_file_stmt, 0, file->filename, -1, 0);
-    sqlite3_bind_int(add_tag_file_stmt, 1, tag->id);
+    sqlite3_bind_text(add_tag_file_stmt, 1, file->filename, -1, 0);
+    sqlite3_bind_int(add_tag_file_stmt, 2, tag->id);
     int res = sqlite3_step(add_tag_file_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed to add tag to file:%s\n", sqlite3_errmsg(db));
     }
     sqlite3_reset(add_tag_file_stmt);
-    //if there's segfaults or memory leaks, stop here, this is probably a bad idea
+    //if there's segfaults or memory leaks, look here, this is probably a bad idea
     //HEY SCORE IF YOU WANT TO BUG ME ABOUT SOMETHING, START HERE!
     get_file_tags(db, file->filename, file);
 }
 
 void get_file_tags(sqlite3* db, const char* filename, TaggedFile* output) {
-    sqlite3_bind_text(get_file_tags_stmt, 0, filename, -1, 0);
+    sqlite3_bind_text(get_file_tags_stmt, 1, filename, -1, 0);
     int res = sqlite3_step(get_file_tags_stmt);
     int count = sqlite3_changes(db);
     int tags[count];
@@ -65,8 +65,8 @@ void get_file_tags(sqlite3* db, const char* filename, TaggedFile* output) {
 // ###### CATEGORY FUNCTIONS ######
 
 void rename_category(sqlite3* db, TagCategory* category, const char* new_name) {
-    sqlite3_bind_text(rename_category_stmt, 0, new_name, -1, 0);
-    sqlite3_bind_int(rename_category_stmt, 1, category->id);
+    sqlite3_bind_text(rename_category_stmt, 1, new_name, -1, 0);
+    sqlite3_bind_int(rename_category_stmt, 2, category->id);
     int res = sqlite3_step(rename_category_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed to rename category:%s\n", sqlite3_errmsg(db));
@@ -75,7 +75,7 @@ void rename_category(sqlite3* db, TagCategory* category, const char* new_name) {
 }
 
 void create_category(sqlite3* db, const char* name) {
-    sqlite3_bind_text(create_category_stmt, 0, name, -1, 0);
+    sqlite3_bind_text(create_category_stmt, 1, name, -1, 0);
     int res = sqlite3_step(create_category_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed to create category:%s\n", sqlite3_errmsg(db));
@@ -108,8 +108,8 @@ void retrieve_categories(sqlite3* db, TagCategory* categories[], int size) {
 // ###### TAG FUNCTIONS ######
 
 void rename_tag(sqlite3* db, Tag* tag, const char* new_name) {
-    sqlite3_bind_text(rename_tag_stmt, 0, new_name, -1, 0);
-    sqlite3_bind_int(rename_tag_stmt, 1, tag->id);
+    sqlite3_bind_text(rename_tag_stmt, 1, new_name, -1, 0);
+    sqlite3_bind_int(rename_tag_stmt, 2, tag->id);
     int res = sqlite3_step(rename_tag_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed to rename tag:%s\n", sqlite3_errmsg(db));
@@ -118,8 +118,8 @@ void rename_tag(sqlite3* db, Tag* tag, const char* new_name) {
 }
 
 void create_tag(sqlite3* db, const char* name, TagCategory* category) {
-    sqlite3_bind_int(create_tag_stmt, 0, category->id);
-    sqlite3_bind_text(create_tag_stmt, 1, name, -1, 0);
+    sqlite3_bind_int(create_tag_stmt, 1, category->id);
+    sqlite3_bind_text(create_tag_stmt, 2, name, -1, 0);
     int res = sqlite3_step(create_tag_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "failed to create tag:%s\n", sqlite3_errmsg(db));
@@ -133,8 +133,8 @@ void change_tag_category(sqlite3* db, Tag* tag, TagCategory* category) {
     if (category != NULL) {
         cat_id = category->id;
     }
-    sqlite3_bind_int(reassign_tag_category_stmt, 0, cat_id);
-    sqlite3_bind_int(reassign_tag_category_stmt, 1, tag->id);
+    sqlite3_bind_int(reassign_tag_category_stmt, 1, cat_id);
+    sqlite3_bind_int(reassign_tag_category_stmt, 2, tag->id);
     int res = sqlite3_step(reassign_tag_category_stmt);
     if (res != SQLITE_OK) {
         fprintf(stderr, "can't change tag category: %s\n", sqlite3_errmsg(db));
