@@ -127,6 +127,9 @@ int retrieve_categories(sqlite3* db, TagCategory** out) {
     size_t i = 0;
     size_t size = 16;
     TagCategory* cats = malloc(sizeof(cats[0])*size);
+    cats[i].id = -1;
+    cats[i].name = "None";
+    i++;
     while (sqlite3_step(fetch_categories_stmt) == SQLITE_ROW) {
         if (i == size) {
             size*=2;
