@@ -2,6 +2,14 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkTreeStore" id="file_list_store">
+    <columns>
+      <!-- column-name Filename -->
+      <column type="gchararray"/>
+      <!-- column-name # -->
+      <column type="gint"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="main_window">
     <property name="can-focus">False</property>
     <child>
@@ -36,6 +44,8 @@
                 <property name="width-request">120</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
+                <property name="model">file_list_store</property>
+                <property name="fixed-height-mode">True</property>
                 <property name="enable-tree-lines">True</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="file_list_selected"/>
@@ -88,7 +98,7 @@
                   <object class="GtkLabel" id="filename_label">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">label</property>
+                    <property name="label" translatable="yes">&lt;no file&gt;</property>
                     <property name="justify">center</property>
                   </object>
                   <packing>

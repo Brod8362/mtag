@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <dirent.h>
+#include <assert.h>
 #include "tags.h"
 
 GtkApplication* app;
@@ -20,15 +21,45 @@ void destroy_all_children(GObject* widget) {
     }
 }
 
-void populate_directory_list(GtkWidget* tree, DIR* directory) {
-    if (!GTK_IS_TREE_VIEW(tree)) {
-        return;
+int populate_directory_list(GObject* tree_obj, GtkTreeIter* parent, DIR* directory) {
+    if (!GTK_IS_TREE_STORE(tree_obj)) {
+        return 0;
     }
-    destroy_all_children(tree);
+    GtkTreeStore* tree = GTK_TREE_STORE(tree_obj);
     struct dirent* de;
+    size_t c = 0;
     while ((de = readdir(directory)) != NULL) {
-        printf("%s\n", de->d_name);
+
+        //skip current and previous directory
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) {
+            continue;
+        }
+        
+        //if current file is a directory
+        if (de->d_type==DT_DIR) {
+            DIR* next_dir = opendir(de->d_name);
+            if (next_dir == NULL) {
+                fprintf(stderr, "failed to open directory %s\n", de->d_name);
+                continue;
+            }
+            GtkTreeIter iter;
+            gtk_tree_store_append(tree, &iter, parent);
+            gtk_tree_store_set(tree, &iter, 0, de->d_name, 1, 0, -1);
+            c += populate_directory_list(tree, &iter, next_dir);
+            free(next_dir);
+        }
+
+        //if current file is a file
+        if (de->d_type==DT_REG) {
+            GtkTreeIter iter;
+            gtk_tree_store_append(tree, &iter, parent);
+            int file_tag_count = -1;
+            gtk_tree_store_set(tree, &iter, 0, de->d_name, 1, file_tag_count, -1);
+        }
+        c++;
     }
+    return c;
+    //dir must be freed externally
 }
 
 int main(int argc, char* argv[]) {
@@ -57,7 +88,7 @@ int main(int argc, char* argv[]) {
     GtkWidget* window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
     gtk_builder_connect_signals(builder, NULL);
 
-    populate_directory_list(GTK_WIDGET(gtk_builder_get_object(builder, "file_list_tree")), dr);
+    populate_directory_list(gtk_builder_get_object(builder, "file_list_store"), NULL, dr);
 
     gtk_widget_show(window);
     gtk_main();
