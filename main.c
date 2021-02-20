@@ -7,8 +7,7 @@
 #include <dirent.h>
 #include <assert.h>
 #include "tags.h"
-
-GtkApplication* app;
+#include "handlers.h"
 
 void destroy_all_children(GObject* widget) {
     if (GTK_IS_CONTAINER(widget)) {
@@ -90,6 +89,9 @@ int main(int argc, char* argv[]) {
 
     GtkStatusbar* statusbar = GTK_STATUSBAR(gtk_builder_get_object(builder, "status_bar"));
     GObject* treemodel = gtk_builder_get_object(builder, "file_list_store");
+    GtkTreeView* treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "file_list_tree"));
+
+    g_signal_connect(treeview, "row-activated", G_CALLBACK(file_selected), NULL);
 
     gtk_statusbar_push(statusbar, 0, "Scanning directories...");
     populate_directory_list(treemodel, NULL, dr);
