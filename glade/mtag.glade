@@ -56,7 +56,6 @@
                     <property name="enable-tree-lines">True</property>
                     <property name="tooltip-column">0</property>
                     <property name="activate-on-single-click">True</property>
-                    <signal name="row-activated" handler="file_selected" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>

@@ -9,6 +9,8 @@
 #include "tags.h"
 #include "handlers.h"
 
+sqlite3* db;
+
 void destroy_all_children(GObject* widget) {
     if (GTK_IS_CONTAINER(widget)) {
         GList* children = gtk_container_get_children(GTK_CONTAINER(widget));
@@ -52,8 +54,8 @@ int populate_directory_list(GObject* tree_obj, GtkTreeIter* parent, DIR* directo
         if (de->d_type==DT_REG) {
             GtkTreeIter iter;
             gtk_tree_store_append(tree, &iter, parent);
-            int file_tag_count = -1;
-            gtk_tree_store_set(tree, &iter, 0, de->d_name, 1, file_tag_count, -1);
+            int tags = file_tag_count(db, de->d_name);
+            gtk_tree_store_set(tree, &iter, 0, de->d_name, 1, tags, -1);
         }
         c++;
     }
@@ -62,7 +64,6 @@ int populate_directory_list(GObject* tree_obj, GtkTreeIter* parent, DIR* directo
 }
 
 int main(int argc, char* argv[]) {
-    sqlite3* db;
     int res = sqlite3_open("test.db", &db);
     if (res != SQLITE_OK) {
         fprintf(stderr, "Cannot open database %s\n", sqlite3_errmsg(db));
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
     GObject* treemodel = gtk_builder_get_object(builder, "file_list_store");
     GtkTreeView* treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "file_list_tree"));
 
-    g_signal_connect(treeview, "row-activated", G_CALLBACK(file_selected), NULL);
+    g_signal_connect(treeview, "row-activated", G_CALLBACK(file_selected), statusbar);
 
     gtk_statusbar_push(statusbar, 0, "Scanning directories...");
     populate_directory_list(treemodel, NULL, dr);

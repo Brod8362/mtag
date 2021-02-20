@@ -19,6 +19,8 @@ typedef struct {
 
 //File related
 
+int file_tag_count(sqlite3* db, const char* filename);
+
 void remove_file_tag(sqlite3* db, TaggedFile* file, Tag* tag);
 
 void add_file_tag(sqlite3* db, TaggedFile* file, Tag* tag);

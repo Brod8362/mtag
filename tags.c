@@ -20,8 +20,26 @@ sqlite3_stmt* reassign_null_category_stmt; //Reassign all instances of a categor
 sqlite3_stmt* get_file_tags_stmt; //Get a file's tags
 sqlite3_stmt* add_file_tag_stmt; //Add a new tag to a file
 sqlite3_stmt* remove_file_tag_stmt; //Remove a tag from a file
+sqlite3_stmt* get_file_tag_count_stmt; //Get count of a file's tags
 
 // ###### FILE FUNCTIONS ######
+
+int file_tag_count(sqlite3* db, const char* filename) {
+    sqlite3_bind_text(get_file_tag_count_stmt, 1, filename, -1, 0);
+    int res;
+    do {
+        res = sqlite3_step(get_file_tag_count_stmt);
+    } while  (res == SQLITE_ROW);
+    
+    if (res != SQLITE_DONE) {
+        fprintf(stderr, "failed getting file tag count:%s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    int ret = sqlite3_column_int(get_file_tag_count_stmt, 0);
+    sqlite3_reset(get_file_tag_count_stmt);
+    return ret;
+}
 
 void remove_file_tag(sqlite3* db, TaggedFile* file, Tag* tag) {
     //name comes 2nd
@@ -238,4 +256,5 @@ void prepare_statements(sqlite3* db) {
     sqlite3_prepare_v2(db, "SELECT tag FROM files WHERE name=?", -1, &get_file_tags_stmt, 0);
     sqlite3_prepare_v2(db, "INSERT INTO files (name, tag) VALUES (?, ?)", -1, &add_file_tag_stmt, 0);
     sqlite3_prepare_v2(db, "DELETE FROM files WHERE tag=? AND name=?", -1, &remove_file_tag_stmt, 0);
+    sqlite3_prepare_v2(db, "SELECT COUNT(tag) FROM files WHERE name=?", -1, &get_file_tag_count_stmt, 0);
 }
