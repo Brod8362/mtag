@@ -40,42 +40,47 @@
             <property name="vexpand">True</property>
             <property name="wide-handle">True</property>
             <child>
-              <object class="GtkTreeView" id="file_list_tree">
-                <property name="width-request">120</property>
+              <object class="GtkScrolledWindow">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
-                <property name="double-buffered">False</property>
-                <property name="model">file_list_store</property>
-                <property name="headers-visible">False</property>
-                <property name="search-column">0</property>
-                <property name="enable-grid-lines">horizontal</property>
-                <property name="enable-tree-lines">True</property>
-                <property name="tooltip-column">0</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="file_list_selected"/>
-                </child>
+                <property name="shadow-type">in</property>
                 <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="resizable">True</property>
-                    <property name="title" translatable="yes">Filename</property>
-                    <property name="sort-column-id">0</property>
+                  <object class="GtkTreeView" id="file_list_tree">
+                    <property name="width-request">120</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="double-buffered">False</property>
+                    <property name="model">file_list_store</property>
+                    <property name="search-column">0</property>
+                    <property name="enable-grid-lines">horizontal</property>
+                    <property name="enable-tree-lines">True</property>
+                    <property name="tooltip-column">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="tree_file_renderer"/>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn">
+                        <property name="resizable">True</property>
+                        <property name="title" translatable="yes">Filename</property>
+                        <property name="sort-column-id">0</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tree_file_renderer"/>
+                          <attributes>
+                            <attribute name="width">16</attribute>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn">
-                    <property name="resizable">True</property>
-                    <property name="title" translatable="yes">#</property>
                     <child>
-                      <object class="GtkCellRendererText" id="tree_number_renderer"/>
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
+                      <object class="GtkTreeViewColumn">
+                        <property name="resizable">True</property>
+                        <property name="title" translatable="yes">#</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tree_number_renderer"/>
+                          <attributes>
+                            <attribute name="width">8</attribute>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
                   </object>
                 </child>
