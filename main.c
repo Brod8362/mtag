@@ -88,7 +88,12 @@ int main(int argc, char* argv[]) {
     GtkWidget* window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
     gtk_builder_connect_signals(builder, NULL);
 
-    populate_directory_list(gtk_builder_get_object(builder, "file_list_store"), NULL, dr);
+    GtkStatusbar* statusbar = GTK_STATUSBAR(gtk_builder_get_object(builder, "status_bar"));
+    GObject* treemodel = gtk_builder_get_object(builder, "file_list_store");
+
+    gtk_statusbar_push(statusbar, 0, "Scanning directories...");
+    populate_directory_list(treemodel, NULL, dr);
+    gtk_statusbar_push(statusbar, 0, "Directory scan complete.");
 
     gtk_widget_show(window);
     gtk_main();
