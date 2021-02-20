@@ -8,6 +8,8 @@
       <column type="gchararray"/>
       <!-- column-name # -->
       <column type="gint"/>
+      <!-- column-name Filepath -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkTreeStore" id="tag_list_store">
@@ -16,8 +18,10 @@
       <column type="gint"/>
       <!-- column-name Tagged -->
       <column type="gboolean"/>
-      <!-- column-name Tag -->
+      <!-- column-name Name -->
       <column type="gchararray"/>
+      <!-- column-name is_category -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="main_window">
@@ -239,6 +243,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
+                    <property name="tooltip-text" translatable="yes">Clear this file's tags</property>
                     <property name="use-stock">True</property>
                   </object>
                   <packing>
@@ -252,6 +257,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
+                    <property name="tooltip-text" translatable="yes">Create a new tag</property>
                     <property name="use-stock">True</property>
                   </object>
                   <packing>

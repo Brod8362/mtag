@@ -2,3 +2,4 @@
 *.o
 mtag
 glade/mtag.glade~
+test_resources
