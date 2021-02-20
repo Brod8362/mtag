@@ -3,7 +3,7 @@
 struct FileInfoCollection {
     GtkImage* image;
     GtkLabel* filename_label;
-    GtkListStore* tag_list;
+    GtkTreeStore* tag_list;
     GtkStatusbar* statusbar;
 };
 

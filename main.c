@@ -10,6 +10,10 @@
 #include "handlers.h"
 
 sqlite3* db;
+int tag_count;
+Tag* tags;
+int category_count;
+TagCategory* categories;
 
 void destroy_all_children(GObject* widget) {
     if (GTK_IS_CONTAINER(widget)) {
@@ -63,6 +67,30 @@ int populate_directory_list(GObject* tree_obj, GtkTreeIter* parent, DIR* directo
     //dir must be freed externally
 }
 
+void populate_tag_list(GObject* tree_obj) {
+    if (!GTK_IS_TREE_STORE(tree_obj)) {
+        return;
+    }
+    GtkTreeStore* tree = GTK_TREE_STORE(tree_obj);
+    GtkTreeIter iter;
+    GtkTreeIter parent;
+    for (int i = 0; i < category_count; i++) {
+        TagCategory category = categories[i];
+        //this is the category header
+        gtk_tree_store_append(tree, &parent, NULL);
+        //order of columns is ID, tagged, name, is_category
+        //gint, gboolean, gchararray, gboolean
+        gtk_tree_store_set(tree, &parent, 0, category.id, 1, false, 2, category.name, 3, true, -1);
+        for (int j = 0; j < tag_count; j++) {
+            Tag tag = tags[j];
+            if (tag.category == category.id) {
+                gtk_tree_store_append(tree, &iter, &parent);
+                gtk_tree_store_set(tree, &iter, 0, tag.id, 1, false, 2, tag.name, 3, false, -1);
+            }
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     int res = sqlite3_open("test.db", &db);
     if (res != SQLITE_OK) {
@@ -94,7 +122,7 @@ int main(int argc, char* argv[]) {
 
     struct FileInfoCollection info = {
         .image = GTK_IMAGE(gtk_builder_get_object(builder, "preview_image")),
-        .tag_list = GTK_LIST_STORE(gtk_builder_get_object(builder, "tag_list_store")),
+        .tag_list = GTK_TREE_STORE(gtk_builder_get_object(builder, "tag_list_store")),
         .filename_label = GTK_LABEL(gtk_builder_get_object(builder, "filename_label")),
         .statusbar = statusbar
     };
@@ -104,6 +132,11 @@ int main(int argc, char* argv[]) {
     gtk_statusbar_push(statusbar, 0, "Scanning directories...");
     populate_directory_list(treemodel, NULL, dr);
     gtk_statusbar_push(statusbar, 0, "Directory scan complete.");
+
+    //fetch tags from DB
+    tag_count = retrieve_tags(db, &tags);
+    category_count = retrieve_categories(db, &categories);
+    populate_tag_list(G_OBJECT(info.tag_list));
 
     gtk_widget_show(window);
     gtk_main();
