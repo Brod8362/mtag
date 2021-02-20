@@ -46,7 +46,7 @@ int populate_directory_list(GObject* tree_obj, GtkTreeIter* parent, DIR* directo
             GtkTreeIter iter;
             gtk_tree_store_append(tree, &iter, parent);
             gtk_tree_store_set(tree, &iter, 0, de->d_name, 1, 0, -1);
-            c += populate_directory_list(tree, &iter, next_dir);
+            c += populate_directory_list(G_OBJECT(tree), &iter, next_dir);
             free(next_dir);
         }
 
@@ -92,7 +92,14 @@ int main(int argc, char* argv[]) {
     GObject* treemodel = gtk_builder_get_object(builder, "file_list_store");
     GtkTreeView* treeview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "file_list_tree"));
 
-    g_signal_connect(treeview, "row-activated", G_CALLBACK(file_selected), statusbar);
+    struct FileInfoCollection info = {
+        .image = GTK_IMAGE(gtk_builder_get_object(builder, "preview_image")),
+        .tag_list = GTK_LIST_STORE(gtk_builder_get_object(builder, "tag_list_store")),
+        .filename_label = GTK_LABEL(gtk_builder_get_object(builder, "filename_label")),
+        .statusbar = statusbar
+    };
+
+    g_signal_connect(treeview, "row-activated", G_CALLBACK(file_selected), &info);
 
     gtk_statusbar_push(statusbar, 0, "Scanning directories...");
     populate_directory_list(treemodel, NULL, dr);

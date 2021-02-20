@@ -10,6 +10,16 @@
       <column type="gint"/>
     </columns>
   </object>
+  <object class="GtkTreeStore" id="tag_list_store">
+    <columns>
+      <!-- column-name ID -->
+      <column type="gint"/>
+      <!-- column-name Tagged -->
+      <column type="gboolean"/>
+      <!-- column-name Tag -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="main_window">
     <property name="can-focus">False</property>
     <child>
@@ -172,13 +182,38 @@
                         <property name="vexpand">True</property>
                         <property name="shadow-type">in</property>
                         <child>
-                          <object class="GtkViewport" id="tag_viewport">
+                          <object class="GtkTreeView" id="tag_tree_view">
                             <property name="visible">True</property>
-                            <property name="can-focus">False</property>
+                            <property name="can-focus">True</property>
+                            <property name="model">tag_list_store</property>
+                            <child internal-child="selection">
+                              <object class="GtkTreeSelection"/>
+                            </child>
                             <child>
-                              <object class="GtkListBox" id="tag_list_box">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
+                              <object class="GtkTreeViewColumn">
+                                <property name="title" translatable="yes">Tagged</property>
+                                <property name="clickable">True</property>
+                                <property name="sort-indicator">True</property>
+                                <child>
+                                  <object class="GtkCellRendererToggle"/>
+                                  <attributes>
+                                    <attribute name="active">1</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkTreeViewColumn">
+                                <property name="resizable">True</property>
+                                <property name="title" translatable="yes">Tag</property>
+                                <property name="clickable">True</property>
+                                <property name="sort-indicator">True</property>
+                                <child>
+                                  <object class="GtkCellRendererText"/>
+                                  <attributes>
+                                    <attribute name="text">2</attribute>
+                                  </attributes>
+                                </child>
                               </object>
                             </child>
                           </object>
